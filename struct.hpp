@@ -10,6 +10,7 @@ typedef struct s_position
 typedef struct s_gamestate
 {
     bool is_running;
+    int speed;
 } t_gamestate;
 
 #endif

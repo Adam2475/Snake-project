@@ -1,14 +1,14 @@
 CC = c++
 NAME = snake
-SRC = main.cpp entity.cpp
+SRC = main.cpp entity.cpp player.cpp
 CFLAGS = -I "C:\SDL\x86_64-w64-mingw32\include" -L "C:\SDL\x86_64-w64-mingw32\lib" -lSDL3
 
 all: $(NAME)
 
-$(NAME): $(SRC)
-	$(CC) -o $(NAME) $(CFLAGS)
+$(NAME):
+	$(CC) -o $(NAME) $(SRC) $(CFLAGS)
 
 clean: 
-	rm -rf $(NAME)
+	rm -f $(NAME)
 
 fclean: clean

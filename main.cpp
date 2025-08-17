@@ -4,15 +4,66 @@
 #include "struct.hpp"
 #include "player.hpp"
 
-void renderEntity(Player **player, SDL_Renderer **renderer)
+void move_player(Player **player, t_gamestate gamestate)
 {
+    SDL_Delay(100);
+
+    // Update body positions: shift segments to follow the head
+    int size = (*player)->getSize();
+    auto &body = (*player)->getPrevPosition();
+
+    // Shift each segment to the previous one's position (start from tail)
+    for (int i = size - 1; i > 0; i--) {
+        body[i] = body[i - 1];
+    }
+
+    // First segment takes head's current position
+    if (size > 0) {
+        body[0] = { (*player)->getPosX(), (*player)->getPosY() };
+    }
+
+    // Move the head
+    e_direction dir = (*player)->getDirection();
+    if (dir == UP)
+        (*player)->setPosY((*player)->getPosY() - gamestate.speed);
+    else if (dir == RIGHT)
+        (*player)->setPosX((*player)->getPosX() + gamestate.speed);
+    else if (dir == LEFT)
+        (*player)->setPosX((*player)->getPosX() - gamestate.speed);
+    else if (dir == DOWN)
+        (*player)->setPosY((*player)->getPosY() + gamestate.speed);
+}
+
+void renderPlayer(Player **player, SDL_Renderer **renderer)
+{
+    e_direction dir = (*player)->getDirection();
     // Clear screen to black
     SDL_SetRenderDrawColor((*renderer), 0, 0, 0, 255);
     SDL_RenderClear((*renderer));
-    // Draw a red square at (square_x, square_y)
+    SDL_SetRenderDrawColor((*renderer), 255, 0, 0, 255);
+
+    // draw head
     SDL_FRect playerRect = { (float)(*player)->getPosX(), (float)(*player)->getPosY(), 10, 10 };
-    SDL_SetRenderDrawColor((*renderer), 255, 0, 0, 255); // red
-    SDL_RenderFillRect((*renderer), &playerRect);
+    SDL_RenderFillRect(*renderer, &playerRect);
+    int i = 0;
+    while (i <= (*player)->getSize())
+    {
+        t_position pos = (*player)->getPrevPosition()[i];
+        // if (dir == UP || dir == DOWN)
+        // {
+        //     SDL_FRect playerRect = { (float)(*player)->getPosX(), (float)(*player)->getPosY() + (i * 10), 10, 10 };
+        //     SDL_RenderFillRect((*renderer), &playerRect);
+        // }
+        // else if (dir == LEFT || dir == RIGHT)
+        // {
+        //     SDL_FRect playerRect = { (float)(*player)->getPosX() + (i * 10), (float)(*player)->getPosY(), 10, 10 };
+        //     SDL_RenderFillRect((*renderer), &playerRect);
+        // }
+        SDL_FRect bodyRect = { (float)pos.x, (float)pos.y, 10, 10 };
+        SDL_RenderFillRect(*renderer, &bodyRect);
+        i++;
+    }
+    i = 0;
 }
 
 void handleInput(t_gamestate **gamestate, Player **player)
@@ -22,11 +73,6 @@ void handleInput(t_gamestate **gamestate, Player **player)
     SDL_Event event;
     if (SDL_PollEvent(&event))
     {
-        // if( event.type == SDL_EVENT_MOUSE_MOTION )
-        // {
-        //     mx = event.motion.x;
-        //     my = event.motion.y;
-        // }
         if (event.type == SDL_EVENT_KEY_DOWN)
         {
             if (event.key.key == SDLK_ESCAPE)
@@ -37,21 +83,16 @@ void handleInput(t_gamestate **gamestate, Player **player)
                 switch (event.key.key)
                 {
                     case SDLK_W:
-                        std::cout << "Move up (W)\n";
-                        std::cout << "x" << x << std::endl;
-                        (*player)->setPosY(y - 2);
+                        (*player)->setDirection(UP);
                         break;
                     case SDLK_A:
-                        std::cout << "Move left (A)\n";
-                        (*player)->setPosX(x - 2);
+                        (*player)->setDirection(LEFT);
                         break;
                     case SDLK_S:
-                        std::cout << "Move down (S)\n";
-                        (*player)->setPosY(y + 2);
+                        (*player)->setDirection(DOWN);
                         break;
                     case SDLK_D:
-                        std::cout << "Move right (D)\n";
-                        (*player)->setPosX(x + 2);
+                        (*player)->setDirection(RIGHT);
                         break;
                     case SDLK_ESCAPE:
                         (*gamestate)->is_running = false;
@@ -74,6 +115,7 @@ int main()
     
     gamestate = (t_gamestate *)malloc(sizeof(t_gamestate *) * 1);
     gamestate->is_running = true;
+    gamestate->speed = 8;
     SDL_Init(SDL_INIT_VIDEO);
     SDL_DisplayID display = SDL_GetPrimaryDisplay();
     SDL_Rect display_bounds;
@@ -83,18 +125,37 @@ int main()
     int heigth = display_bounds.h;
     Player *player = new Player(width / 2, heigth / 2);
     
+    player->setSize(4);
+
+    int j = 0;
+    while (j < player->getSize())
+    {
+        t_position pos{player->getPosX() + (j * 10), player->getPosY()};
+        player->addPosition(pos);
+        j++;
+    }
+
+    // for (const auto& pos : player->getPrevPosition()) {
+    //     std::cout << "(" << pos.x << ", " << pos.y << ") ";
+    // }
+    // std::cout << std::endl;
+
+    // return 0;
+
+    // player->prev_pos 
+    player->setDirection(LEFT);
+    
     SDL_CreateWindowAndRenderer("Snake", width, heigth * 0.95, 0, &window, &renderer);
     SDL_GetWindowSizeInPixels(window, &width, &heigth);
 
-    // float mx = 0;
-    // float my = 0;
-
-    std::cout << "width" << width << "heigth" << heigth << std::endl;
+    // std::cout << "width" << width << "heigth" << heigth << std::endl;
 
     while(gamestate->is_running)
     {
         handleInput(&gamestate, &player);
-        renderEntity(&player, &renderer);
+        renderPlayer(&player, &renderer);
+        // costantly move the player
+        move_player(&player, *gamestate);
         // Present the frame
         SDL_RenderPresent(renderer);
     }
