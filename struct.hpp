@@ -1,5 +1,5 @@
-#ifndef STRUCT_HPP
-# define STRUCT_HPP
+#pragma once
+#include "SDL3/SDL.h"
 
 typedef struct s_position
 {
@@ -11,6 +11,8 @@ typedef struct s_gamestate
 {
     bool is_running;
     int speed;
-} t_gamestate;
+    int collected_food;
 
-#endif
+    SDL_FRect collectable;   // position & size of current collectable
+    bool has_collectable;    // whether one is active
+} t_gamestate;

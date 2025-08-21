@@ -1,8 +1,8 @@
 #ifndef PLAYER_HPP
 # define PLAYER_HPP
 
-#include "struct.hpp"
-#include "entity.hpp"
+#include "../struct.hpp"
+#include "../entity.hpp"
 #include <vector>
 
 enum e_direction
@@ -35,5 +35,9 @@ class Player : public entity
         void setSize(const int x);
         int getSize() const;
 };
+
+
+void move_player(Player **player, t_gamestate gamestate);
+void handleInput(t_gamestate **gamestate, Player **player);
 
 #endif
